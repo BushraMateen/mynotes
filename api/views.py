@@ -45,14 +45,65 @@ def getRoutes(request):
 
     return Response(routes)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def getNotes(request):
+
+    if request.method == 'GET':
+        return getNotesList(request)
+
+    if request.method == 'POST':
+        return createNote(request)
+  
+def getNotesList(request):
     notes = Note.objects.all()
     serializer = NoteSerializer(notes, many = True)
     return Response(serializer.data)
 
-@api_view(['GET'])
-def getNote(request,pk):
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def getNote(request, pk):
+
+    if request.method == 'GET':
+        return getNoteDetail(request, pk)
+
+    if request.method == 'PUT':
+        return updateNote(request, pk)
+
+    if request.method == 'DELETE':
+        return deleteNote(request, pk)
+        
+def getNoteDetail(request,pk):
     notes = Note.objects.get(id=pk)
     serializer = NoteSerializer(notes, many = False )
     return Response(serializer.data)
+
+
+
+def createNote(request):
+    data = request.data
+    note = Note.objects.create(
+        body=data['body']
+    )
+    serializer = NoteSerializer(note, many=False)
+    return Response(serializer.data)
+
+
+
+def updateNote(request,pk):
+    data = request.data
+    note = Note.objects.get(id=pk)
+    serializer = NoteSerializer(instance=note, data=data)
+
+    if serializer.is_valid():
+        serializer.save()
+
+    return Response(serializer.data)
+
+
+def deleteNote(request, pk):
+    note = Note.objects.get(id=pk)
+    note.delete()
+    return Response('Note was deleted!')
+
+
+
